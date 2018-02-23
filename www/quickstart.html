@@ -8,33 +8,18 @@
   <body>
     <p>Drive API Quickstart</p>
 
-    <form action = "http://127.0.0.1:8000/process_get" method = "GET">
-      First Name: <input type = "text" name = "first_name">  <br>
-      Last Name: <input type = "text" name = "last_name">
-      <input type = "submit" value = "Submit">
-   </form>
     <!--Add buttons to initiate auth sequence and sign out-->
     <button id="authorize-button" style="display: none;" class="button">Authorize</button>
     <button id="signout-button" style="display: none;" class="button">Sign Out</button>
     
     <pre id="content"></pre>
-    <p><input type="button" value="Embêter le serveur" id="poke" /></p>
-
+    <p><input type="button" value="Send the configuration to the server" id="poke" /></p>
+    <p id="demo"></p>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="jquery-1.6.1.js"></script>
-    <script>
-        var socket = io.connect('http://localhost:8000');
-        
-        socket.on('message', function(message) {
-        alert('Le serveur a un message pour vous : ' + message);
-        })
-        
-        document.getElementById('poke').onclick = function () {
-        socket.emit('message', 'Salut serveur, ça va ?');
-      };
-      </script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.5/lodash.min.js"></script>
+
     
     <script type="text/javascript" src="quickstart.js"></script>
 

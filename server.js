@@ -1,3 +1,4 @@
+var fs = require('fs')
 var express = require('express')
 var app = express()
 
@@ -8,16 +9,6 @@ app.use(express.static('www'));
 //routage acec express
 app.get('/', function (req, res) {
     res.sendFile(__dirname + "/www/" + "quickstart.html");
-})
-
-app.get('/process_get', function (req, res) {
-    // Prepare output in JSON format
-    response = {
-        first_name: req.query.first_name,
-        last_name: req.query.last_name
-    };
-    console.log(response);
-    //res.end(JSON.stringify(response));
 })
 
 var server = app.listen(PORT, function () {
@@ -32,12 +23,31 @@ var server = app.listen(PORT, function () {
 
     // Quand un client se connecte, on le note dans la console
     io.sockets.on('connection', function (socket) {
-        socket.emit('message', 'Vous êtes bien connecté !');
-               // Quand le serveur reçoit un signal de type "message" du client    
-        socket.on('message', function (message) {
-            console.log('Un client me parle ! Il me dit : ' + message);
-        });	
+        receiveObjectFromClient(socket);
+        sendObjectToClient(socket);
     });
- 
-
 })
+
+//Receive Json model from client and write on a file
+function receiveObjectFromClient(socket) {
+    // Quand le serveur reçoit un signal de type "message" du client
+    socket.on('message', function (message) {
+        console.log(message);
+        fs.writeFile('myjsonfile.json', message, 'utf8',
+            (error) => { console.log("Error!"); });
+    });
+}
+
+//Send file to server
+function sendObjectToClient(socket) {
+    fs.readFile('myjsonfile.json', 'utf8', function readFileCallback(err, data) {
+        if (err) {
+            console.log(err);
+        } else {
+            obj = JSON.parse(data); //now it an object
+            json = JSON.stringify(obj); //convert it back to json
+            socket.emit('message', json);
+        }
+
+    });
+}

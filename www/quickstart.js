@@ -2,6 +2,7 @@
 var CLIENT_ID = '762060065345-2se4jutkcc9sq320lfppd6i7khreb1rv.apps.googleusercontent.com';
 var API_KEY = 'AIzaSyC-1mQtdt4Rqx49qLL1580emL_h2051Z0I';
 var PATH_JSON = 'tree.json';
+var ADDR_SERVER = 'http://localhost:8000';
 
 // Array of API discovery doc URLs for APIs used by the quickstart
 var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
@@ -101,9 +102,11 @@ function listPermissions(fileId, fileName) {
             permission.type +
             ' (' +
             permission.id + ')');
+
         }
       } else {
         appendPre('No permission found.');
+
       }
     },
       function (err) { console.error("Execute error", err); });
@@ -124,6 +127,8 @@ function listFiles() {
     for (var i = 0; i < response.result.files.length; i++) {
       console.log("Parents", response.result.files[i]);
     }
+    var jsonModel = connectionToServer(response);
+
 
     /*
     var files = response.result.files;
@@ -141,34 +146,45 @@ function listFiles() {
 }
 
 /*
-* Read and pars Json files
+connection to the server
 */
-function getFile(path) {
-  loadJSON(path, function (response) {
-    // Parse JSON string into object
-    var actual_JSON = JSON.parse(response);
-    console.log(actual_JSON);
-  });
 
-}
+function connectionToServer(obj) {
+  var json = JSON.stringify(obj);
+  var socket = io.connect(ADDR_SERVER);
+  var jsonModel = receiveObjectToServer(socket, obj)
 
-function loadJSON(path, callback) {
-
-  var xobj = new XMLHttpRequest();
-  xobj.overrideMimeType("application/json");
-  xobj.open('GET', path, true); // Replace 'my_data' with the path to your file
-  xobj.onreadystatechange = function () {
-    if (xobj.readyState == 4 && xobj.status == "200") {
-      // Required use of an anonymous callback as .open will NOT return a value but simply returns undefined in asynchronous mode
-      callback(xobj.responseText);
-    }
-  };
-  xobj.send(null);
+  console.log('Objec Json:', jsonModel);
+  if(_.isEqual(obj, jsonModel)){
+    document.getElementById("demo").innerHTML = "true";
+    console.log("true");
+  }
+  return
 }
 
 /*
-write on Json file
+Send the configuration file
 */
-function writeJsonFile(obj) {
-  var json = JSON.stringify(obj);
+function sendObjectToServer(socket) {
+  document.getElementById('poke').onclick = function () {
+    socket.emit('message', json);
+  };
+}
+
+/*
+* receiveObjectToServer
+*/
+function receiveObjectToServer(socket) {
+  var socket = io.connect(ADDR_SERVER);
+  var jsonModel
+    socket.on('message', function (message) {
+    console.log(message);
+    jsonModel =  JSON.parse(message);
+  })
+  return jsonModel;
+}
+
+function compareJson(message, obj){
+  console.log(message);
+  jsonModel =  JSON.parse(message);
 }
