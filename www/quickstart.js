@@ -1,6 +1,6 @@
 // Client ID and API key from the Developer Console
-var CLIENT_ID = '762060065345-2se4jutkcc9sq320lfppd6i7khreb1rv.apps.googleusercontent.com';
-var API_KEY = 'AIzaSyC-1mQtdt4Rqx49qLL1580emL_h2051Z0I';
+var CLIENT_ID = '';
+var API_KEY = '';
 var PATH_JSON = 'tree.json';
 var ADDR_SERVER = 'http://localhost:8000';
 
@@ -90,8 +90,8 @@ function listPermissions(fileId, fileName) {
   })
     .then(function (response) {
       // Handle the results here (response.result has the parsed body).
-      console.log("Response", response);
-      appendPre('Fichier: ' + fileName + ' possède les permissions: ');
+      console.log("Permission", response);
+     /* appendPre('Fichier: ' + fileName + ' possède les permissions: ');
       var permissions = response.result.permissions;
       if (permissions && permissions.length > 0) {
         for (var i = 0; i < permissions.length; i++) {
@@ -102,12 +102,12 @@ function listPermissions(fileId, fileName) {
             permission.type +
             ' (' +
             permission.id + ')');
-
+          
         }
       } else {
         appendPre('No permission found.');
 
-      }
+      }*/
     },
       function (err) { console.error("Execute error", err); });
 }
@@ -124,10 +124,11 @@ function listFiles() {
   }).then(function (response) {
     appendPre('Files:');
     console.log("Files", response);
-    for (var i = 0; i < response.result.files.length; i++) {
+    /*for (var i = 0; i < response.result.files.length; i++) {
       console.log("Parents", response.result.files[i]);
-    }
-    var jsonModel = connectionToServer(response);
+    }*/
+
+    connectionToServer(response);
 
 
     /*
@@ -149,42 +150,71 @@ function listFiles() {
 connection to the server
 */
 
-function connectionToServer(obj) {
-  var json = JSON.stringify(obj);
+function connectionToServer(actualJson) {
   var socket = io.connect(ADDR_SERVER);
-  var jsonModel = receiveObjectToServer(socket, obj)
-
-  console.log('Objec Json:', jsonModel);
-  if(_.isEqual(obj, jsonModel)){
-    document.getElementById("demo").innerHTML = "true";
-    console.log("true");
-  }
-  return
+  sendObjectToServer(socket, actualJson);
+  receiveObjectToServer(socket, actualJson);
 }
 
 /*
 Send the configuration file
 */
-function sendObjectToServer(socket) {
-  document.getElementById('poke').onclick = function () {
-    socket.emit('message', json);
+function sendObjectToServer(socket, actualJson) {
+  document.getElementById('sendJson').onclick = function () {
+    socket.emit('message', JSON.stringify(actualJson));
   };
 }
 
 /*
 * receiveObjectToServer
 */
-function receiveObjectToServer(socket) {
-  var socket = io.connect(ADDR_SERVER);
-  var jsonModel
-    socket.on('message', function (message) {
-    console.log(message);
-    jsonModel =  JSON.parse(message);
-  })
-  return jsonModel;
+function receiveObjectToServer(socket, actualJson) {
+  document.getElementById('receiveJson').onclick = function () {
+    var socket = io.connect(ADDR_SERVER);
+    socket.on('message', compareFiles.bind(null, socket, actualJson));
+  };
 }
 
-function compareJson(message, obj){
-  console.log(message);
-  jsonModel =  JSON.parse(message);
+
+
+var compareFiles = function (socket, actualJson, data) {
+  jsonModel = JSON.parse(data)
+  filesModel = jsonModel.result.files;
+  filesActual = actualJson.result.files;
+  console.log('Model json :', filesModel);
+  console.log('Actuel json :', filesActual);
+
+  if (_.isEqual(filesModel, filesActual)) {
+    console.log("les modèles sont identiques");
+
+  }
+  else{
+    var filesModelDiff =  JSON.parse(JSON.stringify( filesModel ));
+    var filesActualDiff = JSON.parse(JSON.stringify( filesActual ));
+
+    for (var i = 0; i < filesModelDiff.length; i++){
+      for (var j = 0; j < filesActualDiff.length; j++){
+        if (_.isEqual(filesModelDiff[i], filesActualDiff[j])){
+          filesModelDiff.splice(i, 1);
+          filesActualDiff.splice(j, 1);
+          j=0;
+        }
+      }
+    }
+    console.log('Files model res:', filesModelDiff);
+    console.log('Files actual res:', filesActualDiff);
+    checkNameFiles(filesModelDiff, filesActualDiff)
+
+    for (var i = 0; i < filesActualDiff.length; i++){
+      comparePermissions(filesActualDiff[i].id, null);
+    }
+  }
+}
+
+function checkNameFiles(){}
+
+function checkPermissionsFiles(){}
+
+function comparePermissions(fileId, fileName){
+  listPermissions(fileId, fileName);
 }
