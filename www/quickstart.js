@@ -1,6 +1,6 @@
 // Client ID and API key from the Developer Console
-var CLIENT_ID = '';
-var API_KEY = '';
+var CLIENT_ID = '762060065345-2se4jutkcc9sq320lfppd6i7khreb1rv.apps.googleusercontent.com';
+var API_KEY = 'AIzaSyC-1mQtdt4Rqx49qLL1580emL_h2051Z0I';
 var PATH_JSON = 'tree.json';
 var ADDR_SERVER = 'http://localhost:8000';
 
@@ -13,6 +13,10 @@ var SCOPES = 'https://www.googleapis.com/auth/drive.metadata.readonly';
 
 var authorizeButton = document.getElementById('authorize-button');
 var signoutButton = document.getElementById('signout-button');
+
+
+//Attribut à modifier dans le drive
+var actionEnum = Object.freeze({"name":1, "tuesday":2, "wednesday":3,})
 
 /**
  *  On load, called to load the auth2 library and API client library.
@@ -119,29 +123,11 @@ function listPermissions(fileId, fileName) {
 function listFiles() {
   //getFile(PATH_JSON);
   gapi.client.drive.files.list({
-    'pageSize': 15,
+    'pageSize': 25,
     'fields': "nextPageToken, files(id, name, mimeType, parents, permissionIds)"
   }).then(function (response) {
-    appendPre('Files:');
     console.log("Files", response);
-    /*for (var i = 0; i < response.result.files.length; i++) {
-      console.log("Parents", response.result.files[i]);
-    }*/
-
     connectionToServer(response);
-
-
-    /*
-    var files = response.result.files;
-    if (files && files.length > 0) {
-      for (var i = 0; i < files.length; i++) {
-        var file = files[i];
-        listPermissions(file.id, file.name);
-        appendPre(file.name + ' (' + file.id + ')');
-      }
-    } else {
-      appendPre('No files found.');
-    }*/
   });
 
 }
@@ -211,7 +197,77 @@ var compareFiles = function (socket, actualJson, data) {
   }
 }
 
-function checkNameFiles(){}
+
+//Affichage de la gestion des corrections
+function correctionPre(filesModelDiff, i, filesActualDiff, j, actionEnum) {
+
+
+  var pre = document.getElementById('message-correction');  
+
+  //Creation des bouttons
+  var correct = document.createElement("BUTTON");
+  correct.appendChild(document.createTextNode("Corriger !"))
+  correct.setAttribute("id", "correct");
+
+  var modelCorrect = document.createElement("BUTTON");
+  modelCorrect.appendChild(document.createTextNode("Changer le model"))
+  modelCorrect.setAttribute("id", "model-correct");
+
+  var noCorrect = document.createElement("BUTTON");
+  noCorrect.appendChild(document.createTextNode("Ne pas corriger"))
+  noCorrect.setAttribute("id", "no-correct");
+
+
+  //Creation du css
+  pre.appendChild(document.createTextNode('Le fichier du model: '));
+  var span1 = document.createElement('span1');
+  span1.style.color = 'red';
+  var span2 = document.createElement('span2');
+  span2.style.color = 'red';
+
+  //Creation du paragraphe
+  span1.appendChild(document.createTextNode(filesModelDiff[i].name + ' '));
+  pre.appendChild(span1);
+  pre.appendChild(document.createTextNode(' et le fichier du drive: '));
+  span2.appendChild(document.createTextNode(filesActualDiff[j].name));
+  pre.appendChild(span2);
+  pre.appendChild(document.createTextNode(' on le même id\n Voulez-vous modifier le nom de l\'un des fichiers?\n'));
+
+  //Affichage des bouttons
+  pre.appendChild(document.createTextNode('\n'));
+  pre.appendChild(correct);
+  pre.appendChild(document.createTextNode('  '));
+  pre.appendChild(modelCorrect);
+  pre.appendChild(document.createTextNode('  '));
+  pre.appendChild(noCorrect);
+  pre.appendChild(document.createTextNode('\n\n'));
+
+
+
+  document.getElementById('correct').onclick = function () {
+    correct[0].parentNode.removeChild(correct[0]);
+    pre.removeChild(modelCorrect);
+    pre.removeChild(noCorrect);
+  };
+  document.getElementById('model-correct').onclick = function () {
+    pre.removeChild();
+  };
+  document.getElementById('no-correct').onclick = function () {
+    pre.removeChild();
+  };
+
+}
+
+function checkNameFiles(filesModelDiff, filesActualDiff){
+  for (var i = 0; i < filesModelDiff.length; i++){
+    for (var j = 0; j < filesActualDiff.length; j++){
+      if (filesModelDiff[i].id == filesActualDiff[j].id
+            && filesModelDiff[i].name != filesActualDiff[j].name){
+              correctionPre(filesModelDiff, i, filesActualDiff, j, actionEnum.name)
+      }
+    }
+  }
+}
 
 function checkPermissionsFiles(){}
 
