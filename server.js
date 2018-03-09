@@ -9,6 +9,7 @@ app.use(express.static('www'));
 //routage acec express
 app.get('/', function (req, res) {
     res.sendFile(__dirname + "/www/" + "quickstart.html");
+    //res.sendFile(__dirname + "/data/images/check.gif");
 })
 
 var server = app.listen(PORT, function () {
@@ -33,14 +34,14 @@ function receiveObjectFromClient(socket) {
     // Quand le serveur reçoit un signal de type "message" du client
     socket.on('message', function (message) {
         console.log(message);
-        fs.writeFile('myjsonfile.json', message, 'utf8',
+        fs.writeFile('data/json/myjsonfile.json', message, 'utf8',
             (error) => { console.log("Error!"); });
     });
 }
 
 //Send file to server
 function sendObjectToClient(socket) {
-    fs.readFile('myjsonfile.json', 'utf8', function readFileCallback(err, data) {
+    fs.readFile('data/json/myjsonfile.json', 'utf8', function readFileCallback(err, data) {
         if (err) {
             console.log(err);
         } else {

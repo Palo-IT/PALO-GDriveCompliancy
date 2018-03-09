@@ -9,7 +9,7 @@ var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/res
 
 // Authorization scopes required by the API; multiple scopes can be
 // included, separated by spaces.
-var SCOPES = 'https://www.googleapis.com/auth/drive.metadata.readonly';
+var SCOPES = 'https://www.googleapis.com/auth/drive.metadata';
 
 var authorizeButton = document.getElementById('authorize-button');
 var signoutButton = document.getElementById('signout-button');
@@ -199,7 +199,7 @@ var compareFiles = function (socket, actualJson, data) {
 
 
 //Affichage de la gestion des corrections
-function correctionPre(filesModelDiff, i, filesActualDiff, j, actionEnum) {
+function correctionPre(filesModelDiff, i, filesActualDiff, j, actionEnum, nbDiff) {
 
 
   var pre = document.getElementById('message-correction');  
@@ -207,15 +207,15 @@ function correctionPre(filesModelDiff, i, filesActualDiff, j, actionEnum) {
   //Creation des bouttons
   var correct = document.createElement("BUTTON");
   correct.appendChild(document.createTextNode("Corriger !"))
-  correct.setAttribute("id", "correct");
+  correct.setAttribute("id", "correct"+nbDiff);
 
   var modelCorrect = document.createElement("BUTTON");
   modelCorrect.appendChild(document.createTextNode("Changer le model"))
-  modelCorrect.setAttribute("id", "model-correct");
+  modelCorrect.setAttribute("id", "model-correct"+nbDiff);
 
   var noCorrect = document.createElement("BUTTON");
   noCorrect.appendChild(document.createTextNode("Ne pas corriger"))
-  noCorrect.setAttribute("id", "no-correct");
+  noCorrect.setAttribute("id", "no-correct"+nbDiff);
 
 
   //Creation du css
@@ -233,7 +233,16 @@ function correctionPre(filesModelDiff, i, filesActualDiff, j, actionEnum) {
   pre.appendChild(span2);
   pre.appendChild(document.createTextNode(' on le même id\n Voulez-vous modifier le nom de l\'un des fichiers?\n'));
 
-  //Affichage des bouttons
+
+  //Affichage image validation
+  var img = document.createElement("img");
+  img.src = "/images/check.gif";
+  img.style.display = 'none';
+  img.width = '160'; 
+  img.setAttribute("id", "check"+nbDiff);
+  pre.appendChild(img);
+
+  //Affichage des bouttons/*
   pre.appendChild(document.createTextNode('\n'));
   pre.appendChild(correct);
   pre.appendChild(document.createTextNode('  '));
@@ -243,27 +252,35 @@ function correctionPre(filesModelDiff, i, filesActualDiff, j, actionEnum) {
   pre.appendChild(document.createTextNode('\n\n'));
 
 
+  document.getElementById("correct"+nbDiff).onclick = function () {
+    document.getElementById("correct"+nbDiff).style.display = 'none';
+    document.getElementById("model-correct"+nbDiff).style.display = 'none';
+    document.getElementById("no-correct"+nbDiff).style.display = 'none';
+    document.getElementById("check"+nbDiff).style.display = 'block';
+    renameFile(filesModelDiff[i].id, filesActualDiff[j].name);
 
-  document.getElementById('correct').onclick = function () {
-    correct[0].parentNode.removeChild(correct[0]);
-    pre.removeChild(modelCorrect);
-    pre.removeChild(noCorrect);
   };
-  document.getElementById('model-correct').onclick = function () {
-    pre.removeChild();
+  document.getElementById('model-correct'+nbDiff).onclick = function () {
+    document.getElementById('correct'+nbDiff).style.display = 'none';
+    document.getElementById('model-correct'+nbDiff).style.display = 'none';
+    document.getElementById('no-correct'+nbDiff).style.display = 'none';
   };
-  document.getElementById('no-correct').onclick = function () {
-    pre.removeChild();
+  document.getElementById('no-correct'+nbDiff).onclick = function () {
+    document.getElementById('correct'+nbDiff).style.display = 'none';
+    document.getElementById('model-correct'+nbDiff).style.display = 'none';
+    document.getElementById('no-correct'+nbDiff).style.display = 'none';
   };
 
 }
 
 function checkNameFiles(filesModelDiff, filesActualDiff){
+  var nbDiff = 0;
   for (var i = 0; i < filesModelDiff.length; i++){
     for (var j = 0; j < filesActualDiff.length; j++){
       if (filesModelDiff[i].id == filesActualDiff[j].id
             && filesModelDiff[i].name != filesActualDiff[j].name){
-              correctionPre(filesModelDiff, i, filesActualDiff, j, actionEnum.name)
+              correctionPre(filesModelDiff, i, filesActualDiff, j, actionEnum.name, nbDiff);
+              nbDiff++;
       }
     }
   }
@@ -272,5 +289,16 @@ function checkNameFiles(filesModelDiff, filesActualDiff){
 function checkPermissionsFiles(){}
 
 function comparePermissions(fileId, fileName){
-  listPermissions(fileId, fileName);
+  //listPermissions(fileId, fileName);
+}
+
+function renameFile(fileId, newTitle) {
+  var body = {'title': newTitle};
+  var request = gapi.client.drive.files.patch({
+    'fileId': fileId,
+    'resource': body
+  });
+  request.execute(function(resp) {
+    console.log('New Title: ' + resp.title);
+  });
 }
