@@ -1,6 +1,6 @@
 // Client ID and API key from the Developer Console
-var CLIENT_ID = '762060065345-2se4jutkcc9sq320lfppd6i7khreb1rv.apps.googleusercontent.com';
-var API_KEY = 'AIzaSyC-1mQtdt4Rqx49qLL1580emL_h2051Z0I';
+var CLIENT_ID = '';
+var API_KEY = '';
 var PATH_JSON = 'tree.json';
 var ADDR_SERVER = 'http://localhost:8000';
 
@@ -16,7 +16,7 @@ var signoutButton = document.getElementById('signout-button');
 
 
 //Attribut à modifier dans le drive
-var actionEnum = Object.freeze({"name":1, "tuesday":2, "wednesday":3,})
+var actionEnum = Object.freeze({ "name": 1, "tuesday": 2, "wednesday": 3, })
 
 /**
  *  On load, called to load the auth2 library and API client library.
@@ -95,23 +95,7 @@ function listPermissions(fileId, fileName) {
     .then(function (response) {
       // Handle the results here (response.result has the parsed body).
       console.log("Permission", response);
-     /* appendPre('Fichier: ' + fileName + ' possède les permissions: ');
-      var permissions = response.result.permissions;
-      if (permissions && permissions.length > 0) {
-        for (var i = 0; i < permissions.length; i++) {
-          var permission = permissions[i];
-          appendPre('Role: ' +
-            permission.role +
-            ' type: ' +
-            permission.type +
-            ' (' +
-            permission.id + ')');
-          
-        }
-      } else {
-        appendPre('No permission found.');
-
-      }*/
+      
     },
       function (err) { console.error("Execute error", err); });
 }
@@ -121,7 +105,6 @@ function listPermissions(fileId, fileName) {
  * Print files.
  */
 function listFiles() {
-  //getFile(PATH_JSON);
   gapi.client.drive.files.list({
     'pageSize': 25,
     'fields': "nextPageToken, files(id, name, mimeType, parents, permissionIds)"
@@ -162,7 +145,7 @@ function receiveObjectToServer(socket, actualJson) {
 }
 
 
-
+//Compare files Json Model and actual drive
 var compareFiles = function (socket, actualJson, data) {
   jsonModel = JSON.parse(data)
   filesModel = jsonModel.result.files;
@@ -174,16 +157,16 @@ var compareFiles = function (socket, actualJson, data) {
     console.log("les modèles sont identiques");
 
   }
-  else{
-    var filesModelDiff =  JSON.parse(JSON.stringify( filesModel ));
-    var filesActualDiff = JSON.parse(JSON.stringify( filesActual ));
+  else {
+    var filesModelDiff = JSON.parse(JSON.stringify(filesModel));
+    var filesActualDiff = JSON.parse(JSON.stringify(filesActual));
 
-    for (var i = 0; i < filesModelDiff.length; i++){
-      for (var j = 0; j < filesActualDiff.length; j++){
-        if (_.isEqual(filesModelDiff[i], filesActualDiff[j])){
+    for (var i = 0; i < filesModelDiff.length; i++) {
+      for (var j = 0; j < filesActualDiff.length; j++) {
+        if (_.isEqual(filesModelDiff[i], filesActualDiff[j])) {
           filesModelDiff.splice(i, 1);
           filesActualDiff.splice(j, 1);
-          j=0;
+          j = 0;
         }
       }
     }
@@ -191,7 +174,7 @@ var compareFiles = function (socket, actualJson, data) {
     console.log('Files actual res:', filesActualDiff);
     checkNameFiles(filesModelDiff, filesActualDiff)
 
-    for (var i = 0; i < filesActualDiff.length; i++){
+    for (var i = 0; i < filesActualDiff.length; i++) {
       comparePermissions(filesActualDiff[i].id, null);
     }
   }
@@ -200,22 +183,20 @@ var compareFiles = function (socket, actualJson, data) {
 
 //Affichage de la gestion des corrections
 function correctionPre(filesModelDiff, i, filesActualDiff, j, actionEnum, nbDiff) {
-
-
-  var pre = document.getElementById('message-correction');  
+  var pre = document.getElementById('message-correction');
 
   //Creation des bouttons
   var correct = document.createElement("BUTTON");
   correct.appendChild(document.createTextNode("Corriger !"))
-  correct.setAttribute("id", "correct"+nbDiff);
+  correct.setAttribute("id", "correct" + nbDiff);
 
   var modelCorrect = document.createElement("BUTTON");
   modelCorrect.appendChild(document.createTextNode("Changer le model"))
-  modelCorrect.setAttribute("id", "model-correct"+nbDiff);
+  modelCorrect.setAttribute("id", "model-correct" + nbDiff);
 
   var noCorrect = document.createElement("BUTTON");
   noCorrect.appendChild(document.createTextNode("Ne pas corriger"))
-  noCorrect.setAttribute("id", "no-correct"+nbDiff);
+  noCorrect.setAttribute("id", "no-correct" + nbDiff);
 
 
   //Creation du css
@@ -238,8 +219,8 @@ function correctionPre(filesModelDiff, i, filesActualDiff, j, actionEnum, nbDiff
   var img = document.createElement("img");
   img.src = "/images/check.gif";
   img.style.display = 'none';
-  img.width = '160'; 
-  img.setAttribute("id", "check"+nbDiff);
+  img.width = '160';
+  img.setAttribute("id", "check" + nbDiff);
   pre.appendChild(img);
 
   //Affichage des bouttons/*
@@ -252,49 +233,51 @@ function correctionPre(filesModelDiff, i, filesActualDiff, j, actionEnum, nbDiff
   pre.appendChild(document.createTextNode('\n\n'));
 
 
-  document.getElementById("correct"+nbDiff).onclick = function () {
-    document.getElementById("correct"+nbDiff).style.display = 'none';
-    document.getElementById("model-correct"+nbDiff).style.display = 'none';
-    document.getElementById("no-correct"+nbDiff).style.display = 'none';
-    document.getElementById("check"+nbDiff).style.display = 'block';
-    renameFile(filesModelDiff[i].id, filesActualDiff[j].name);
+  document.getElementById("correct" + nbDiff).onclick = function () {
+    document.getElementById("correct" + nbDiff).style.display = 'none';
+    document.getElementById("model-correct" + nbDiff).style.display = 'none';
+    document.getElementById("no-correct" + nbDiff).style.display = 'none';
+    document.getElementById("check" + nbDiff).style.display = 'block';
+    renameFile(filesActualDiff[j].id, filesModelDiff[i].name);
 
   };
-  document.getElementById('model-correct'+nbDiff).onclick = function () {
-    document.getElementById('correct'+nbDiff).style.display = 'none';
-    document.getElementById('model-correct'+nbDiff).style.display = 'none';
-    document.getElementById('no-correct'+nbDiff).style.display = 'none';
+  document.getElementById('model-correct' + nbDiff).onclick = function () {
+    document.getElementById('correct' + nbDiff).style.display = 'none';
+    document.getElementById('model-correct' + nbDiff).style.display = 'none';
+    document.getElementById('no-correct' + nbDiff).style.display = 'none';
   };
-  document.getElementById('no-correct'+nbDiff).onclick = function () {
-    document.getElementById('correct'+nbDiff).style.display = 'none';
-    document.getElementById('model-correct'+nbDiff).style.display = 'none';
-    document.getElementById('no-correct'+nbDiff).style.display = 'none';
+  document.getElementById('no-correct' + nbDiff).onclick = function () {
+    document.getElementById('correct' + nbDiff).style.display = 'none';
+    document.getElementById('model-correct' + nbDiff).style.display = 'none';
+    document.getElementById('no-correct' + nbDiff).style.display = 'none';
   };
 
 }
 
-function checkNameFiles(filesModelDiff, filesActualDiff){
+function checkNameFiles(filesModelDiff, filesActualDiff) {
   var nbDiff = 0;
-  for (var i = 0; i < filesModelDiff.length; i++){
-    for (var j = 0; j < filesActualDiff.length; j++){
+  for (var i = 0; i < filesModelDiff.length; i++) {
+    for (var j = 0; j < filesActualDiff.length; j++) {
       if (filesModelDiff[i].id == filesActualDiff[j].id
-            && filesModelDiff[i].name != filesActualDiff[j].name){
-              correctionPre(filesModelDiff, i, filesActualDiff, j, actionEnum.name, nbDiff);
-              nbDiff++;
+        && filesModelDiff[i].name != filesActualDiff[j].name) {
+        correctionPre(filesModelDiff, i, filesActualDiff, j, actionEnum.name, nbDiff);
+        nbDiff++;
       }
     }
   }
 }
 
-function checkPermissionsFiles(){}
+function checkPermissionsFiles() { }
 
-function comparePermissions(fileId, fileName){
+function comparePermissions(fileId, fileName) {
   //listPermissions(fileId, fileName);
 }
 
+  //Try this https://advancedweb.hu/2015/05/26/accessing-google-drive-in-javascript/
+  //https://gist.github.com/mkaminsky11/8624150
 function renameFile(fileId, newTitle) {
   var body = {'title': newTitle};
-  var request = gapi.client.drive.files.patch({
+  var request = gapi.client.drive.files.update({
     'fileId': fileId,
     'resource': body
   });
